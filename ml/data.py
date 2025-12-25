@@ -1,18 +1,14 @@
 import numpy as np
-from sklearn.preprocessing import LabelBinarizer, OneHotEncoder
-
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 
 def process_data(
-    X, categorical_features=[], label=None, training=True, encoder=None, lb=None
+    X, categorical_features=[], label=None, training=True, encoders=None, lb=None
 ):
-    """ Process the data used in the machine learning pipeline.
+    """Process the data used in the machine learning pipeline.
 
-    Processes the data using one hot encoding for the categorical features and a
-    label binarizer for the labels. This can be used in either training or
-    inference/validation.
-
-    Note: depending on the type of model used, you may want to add in functionality that
-    scales the continuous data.
+    Processes the data using label encoding for categorical features and a
+    label binarizer for the labels. This can be used in either training or inference.
 
     Inputs
     ------
@@ -25,10 +21,10 @@ def process_data(
         for y (default=None)
     training : bool
         Indicator if training mode or inference/validation mode.
-    encoder : sklearn.preprocessing._encoders.OneHotEncoder
-        Trained sklearn OneHotEncoder, only used if training=False.
-    lb : sklearn.preprocessing._label.LabelBinarizer
-        Trained sklearn LabelBinarizer, only used if training=False.
+    encoders : dict
+        Dictionary of trained LabelEncoders for categorical features, used only if training=False.
+    lb : sklearn.preprocessing.LabelBinarizer
+        Trained LabelBinarizer for the target variable, used only if training=False.
 
     Returns
     -------
@@ -36,12 +32,10 @@ def process_data(
         Processed data.
     y : np.array
         Processed labels if labeled=True, otherwise empty np.array.
-    encoder : sklearn.preprocessing._encoders.OneHotEncoder
-        Trained OneHotEncoder if training is True, otherwise returns the encoder passed
-        in.
-    lb : sklearn.preprocessing._label.LabelBinarizer
-        Trained LabelBinarizer if training is True, otherwise returns the binarizer
-        passed in.
+    encoders : dict
+        Dictionary of trained LabelEncoders for categorical features if training=True.
+    lb : sklearn.preprocessing.LabelBinarizer
+        Trained LabelBinarizer if training=True.
     """
 
     if label is not None:
@@ -49,25 +43,28 @@ def process_data(
         X = X.drop([label], axis=1)
     else:
         y = np.array([])
+    
+    encoders = encoders if encoders is not None else {}
 
-    X_categorical = X[categorical_features].values
-    X_continuous = X.drop(*[categorical_features], axis=1)
+    if training:
+        encoders = {}
+        for col in categorical_features:
+            le = LabelEncoder()
+            X[col] = le.fit_transform(X[col])  # Fit and transform categorical values to integers
+            encoders[col] = le  # Store the trained encoder so we can reuse it later for inference
+        lb = LabelEncoder()  # Use LabelEncoder instead of LabelBinarizer
+        y = lb.fit_transform(y)  # Convert labels to 0 and 1,  the target variable (salary) is converted into 0/1.
 
-    if training is True:
-        encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
-        lb = LabelBinarizer()
-        X_categorical = encoder.fit_transform(X_categorical)
-        y = lb.fit_transform(y.values).ravel()
     else:
-        X_categorical = encoder.transform(X_categorical)
-        try:
-            y = lb.transform(y.values).ravel()
-        # Catch the case where y is None because we're doing inference.
-        except AttributeError:
-            pass
+        for col in categorical_features:
+            if col in encoders:
+                X[col] = encoders[col].transform(X[col]) # Use pre-fitted encoders
 
-    X = np.concatenate([X_continuous, X_categorical], axis=1)
-    return X, y, encoder, lb
+        if lb is not None and label is not None:
+            y = lb.transform(y)
+    print(X.columns)
+
+    return X.to_numpy(), y, encoders, lb # converts the Pandas DataFrame to a NumPy array for compatibility with ML models. NumPy arrays are faster for large datasets.
 
 def apply_label(inference):
     """ Convert the binary label in a single inference sample into string output."""
@@ -75,3 +72,4 @@ def apply_label(inference):
         return ">50K"
     elif inference[0] == 0:
         return "<=50K"
+

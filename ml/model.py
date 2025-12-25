@@ -1,5 +1,8 @@
 import pickle
-from sklearn.metrics import fbeta_score, precision_score, recall_score
+import os
+from sklearn.model_selection import GridSearchCV
+from xgboost import XGBClassifier
+from sklearn.metrics import fbeta_score, precision_score, recall_score, f1_score
 from ml.data import process_data
 # TODO: add necessary import
 
@@ -16,11 +19,33 @@ def train_model(X_train, y_train):
         Labels.
     Returns
     -------
-    model
-        Trained machine learning model.
+    model : XGBClassifier
+        Best-trained XGBoost model using GridSearchCV.
     """
-    # TODO: implement the function
-    pass
+    # Compute class weight for imbalanced dataset
+    scale_pos_weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])  # 0 -> `<=50K`, 1 -> `>50K`
+
+     # Define XGBoost model
+    model = XGBClassifier(use_label_encoder=False, eval_metric="logloss", random_state=42, scale_pos_weight=scale_pos_weight)
+
+    # Define hyperparameter grid for tuning
+    param_grid = {
+        "n_estimators": [100, 200],
+        "max_depth": [3, 5, 7],
+        "learning_rate": [0.01, 0.1, 0.2],
+        "subsample": [0.8, 1.0],
+        "colsample_bytree": [0.8, 1.0]
+    }
+
+    # Perform 5-fold Cross-Validation with GridSearchCV
+    grid_search = GridSearchCV(model, param_grid, scoring="f1", cv=5, n_jobs=-1, verbose=2)
+    grid_search.fit(X_train, y_train)  # Train and find best parameters
+
+    # Get the best model
+    best_model = grid_search.best_estimator_
+    print("Best Parameters:", grid_search.best_params_)
+
+    return best_model
 
 
 def compute_model_metrics(y, preds):
@@ -39,7 +64,7 @@ def compute_model_metrics(y, preds):
     recall : float
     fbeta : float
     """
-    fbeta = fbeta_score(y, preds, beta=1, zero_division=1)
+    fbeta = f1_score(y, preds, zero_division=1)
     precision = precision_score(y, preds, zero_division=1)
     recall = recall_score(y, preds, zero_division=1)
     return precision, recall, fbeta
@@ -59,28 +84,73 @@ def inference(model, X):
     preds : np.array
         Predictions from the model.
     """
-    # TODO: implement the function
-    pass
+    # Now, predict using the preprocessed data
+    preds = model.predict(X)
+    return preds
 
-def save_model(model, path):
-    """ Serializes model to a file.
+def save_model(model, model_path):
+    """ 
+    Serializes the trained machine learning model and encoder to files.
 
     Inputs
     ------
-    model
-        Trained machine learning model or OneHotEncoder.
-    path : str
-        Path to save pickle file.
+    model : object
+        Trained machine learning model (e.g., XGBClassifier).
+    encoder : object
+        Trained LabelEncoder or OneHotEncoder.
+    model_path : str
+        Path to save the model pickle file.
+    encoder_path : str
+        Path to save the encoder pickle file.
+
+    Returns
+    -------
+    None
     """
-    # TODO: implement the function
-    pass
+    try:
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
 
-def load_model(path):
-    """ Loads pickle file from `path` and returns it."""
-    # TODO: implement the function
-    pass
+        # Save model
+        with open(model_path, "wb") as f:
+            pickle.dump(model, f)
+        print(f"Model saved successfully at: {model_path}")
+
+    except Exception as e:
+        print(f"Error saving model or encoder: {e}")
 
 
+def load_model(model_path):
+    """ 
+    Loads a serialized model and encoder from pickle files.
+
+    Inputs
+    ------
+    model_path : str
+        Path to the saved model pickle file.
+    encoder_path : str
+        Path to the saved encoder pickle file.
+
+    Returns
+    -------
+    model : object
+        Trained machine learning model.
+    encoder : object
+        Trained LabelEncoder or OneHotEncoder.
+    """
+    try:
+        # Load model
+        with open(model_path, "rb") as f:
+            model = pickle.load(f)
+        print(f"Successfully loaded model from: {model_path}")
+
+        return model
+
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        return None, None  # Return None if loading fails
+
+'''
 def performance_on_categorical_slice(
     data, column_name, slice_value, categorical_features, label, encoder, lb, model
 ):
@@ -126,3 +196,4 @@ def performance_on_categorical_slice(
     preds = None # your code here to get prediction on X_slice using the inference function
     precision, recall, fbeta = compute_model_metrics(y_slice, preds)
     return precision, recall, fbeta
+'''
