@@ -1,91 +1,115 @@
-# Deploying ML Pipeline with FastAPI
+# 🚀 Deploying ML Pipeline with FastAPI
 
-This project demonstrates a complete Machine Learning pipeline for the Census Income Prediction task. It includes data processing, model training, and deployment using FastAPI and Docker.
+## 📌 Overview
+This project demonstrates an end-to-end **machine learning inference pipeline** exposed through a **FastAPI-based REST API**. The primary focus is on **backend design, request validation, and deployment structure**, with machine learning used as a supporting component rather than a black box.
 
-## Project Structure
+The project uses the Census Income dataset to predict whether an individual earns `<=50K` or `>50K`.
 
+---
+
+## 🎯 Problem Statement
+Machine learning models are often trained but not deployed in a structured, production-ready way. This project shows how a trained model can be:
+- validated,
+- served through an API,
+- and packaged for deployment using Docker.
+
+---
+
+## 🏗 Project Structure
+    Deploying-ML-Pipeline-with-FastAPI/
+    ├── data/ # Dataset files
+    ├── ml/ # Data processing and model logic
+    ├── model/ # Saved model artifacts (encoder, model.pkl)
+    ├── Experimentation/ # Jupyter notebooks for EDA
+    ├── main.py # FastAPI application
+    ├── train_model.py # Script to train the model
+    ├── evaluation.py # Model evaluation script
+    ├── Dockerfile # Docker configuration
+    ├── requirements.txt # Python dependencies
+    └── README.md
+
+
+The codebase is organized to clearly separate **data processing**, **model logic**, and **API serving**.
+
+
+## 🧠 How the System Works
+- Raw census data is processed and cleaned.
+- A machine learning model is trained and evaluated offline.
+- The trained model and encoders are saved for inference.
+- FastAPI loads the model at startup.
+- Incoming API requests are validated and passed to the prediction pipeline.
+- Predictions are returned as structured JSON responses.
+
+
+## 🛠️ Tech Stack
+- **Python**
+- **FastAPI**
+- **scikit-learn / XGBoost**
+- **Pydantic**
+- **Uvicorn**
+- **Docker**
+
+---
+
+## 📥 Installation
+
+### Clone the repository
 ```
-Deploying-ML-Pipeline-with-FastAPI/
-├── data/                   # Dataset files
-├── ml/                     # Machine learning modules (data processing, model definition)
-├── model/                  # Saved model artifacts (encoder, model.pkl)
-├── Experimentation/        # Jupyter notebooks for EDA
-├── main.py                 # FastAPI application
-├── train_model.py          # Script to train the model
-├── evaluation.py           # Script to evaluate model performance
-├── Dockerfile              # Docker configuration
-├── requirements.txt        # Python dependencies
-└── ...
+git clone https://github.com/Lali182k5/Deploying-ML-Pipeline-with-FastAPI.git
+cd Deploying-ML-Pipeline-with-FastAPI
 ```
 
-## Features
+### Create a virtual environment
+```
+python -m venv venv
+# Windows
+.\venv\Scripts\activate
+# Linux/Mac
+source venv/bin/activate
+```
 
-*   **Machine Learning:** XGBoost Classifier trained on Census Income data.
-*   **API:** FastAPI for serving real-time predictions.
-*   **Containerization:** Docker support for easy deployment.
-*   **Data Versioning:** DVC integration (configured).
-*   **Testing:** Unit tests for ML components (if applicable).
+### Install dependencies
+```
+pip install -r requirements.txt
+```
 
-## Installation
+---
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/Lali182k5/Deploying-ML-Pipeline-with-FastAPI.git
-    cd Deploying-ML-Pipeline-with-FastAPI
-    ```
-
-2.  **Create a virtual environment:**
-    ```bash
-    python -m venv venv
-    # Windows
-    .\venv\Scripts\activate
-    # Linux/Mac
-    source venv/bin/activate
-    ```
-
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-## Usage
+## ▶️ Usage
 
 ### 1. Train the Model
-To retrain the model using the data in `data/census_cleaned_data.csv`:
-```bash
+```
 python train_model.py
 ```
-This will save the trained model and encoder to the `model/` directory.
+This saves trained model artifacts to the model/ directory.
 
 ### 2. Run the API Locally
-Start the FastAPI server using Uvicorn:
-```bash
+```
 uvicorn main:app --reload
 ```
-The API will be available at `http://127.0.0.1:8000`.
-
+The API will be available at:
+```
+http://127.0.0.1:8000
+```
 ### 3. Docker Deployment
-Build and run the application using Docker:
-
-**Build the image:**
-```bash
+Build the image
+```
 docker build -t fastapi-ml-app .
 ```
-
-**Run the container:**
-```bash
+Run the container
+```
 docker run -p 8000:8000 fastapi-ml-app
 ```
 
-## API Endpoints
+## 🔌 API Endpoints
 
-### `GET /`
+### GET /
 Returns a welcome message.
 
-### `POST /data/`
+### POST /data/
 Predicts whether income is `<=50K` or `>50K`.
 
-**Example Request Body:**
+#### Example Request
 ```json
 {
   "age": 37,
@@ -104,12 +128,46 @@ Predicts whether income is `<=50K` or `>50K`.
 }
 ```
 
-**Example Response:**
+## Example Response
 ```json
 {
   "result": "<=50K"
 }
 ```
 
-## Documentation
-Once the app is running, visit `http://localhost:8000/docs` for the interactive Swagger UI documentation.
+## 📘 Documentation
+
+Interactive API documentation is available via Swagger UI:
+```
+http://localhost:8000/docs
+```
+
+## ⚠️ Limitations
+
+- Designed for single-model inference
+- No authentication or authorization layer
+- Limited monitoring and logging
+- Dataset-specific assumptions
+
+## 🚀 Future Improvements
+
+- Add authentication and rate limiting
+- Add automated tests for API endpoints
+- Improve monitoring and logging
+- Support model versioning
+
+## 📌 Key Learnings
+
+- Deploying ML inference using FastAPI
+- Structuring backend APIs with validation
+- Separating training and serving logic
+- Packaging applications using Docker
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+
+
+
+
