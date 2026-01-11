@@ -1,38 +1,22 @@
-import json
-
 import requests
 
-# TODO: send a GET using the URL http://127.0.0.1:8000
-r = None # Your code here
-
-# TODO: print the status code
-# print()
-# TODO: print the welcome message
-# print()
+BASE_URL = "http://127.0.0.1:8000"
 
 
+def main():
+    health = requests.get(f"{BASE_URL}/")
+    print("Health:", health.status_code, health.json())
 
-data = {
-    "age": 37,
-    "workclass": "Private",
-    "fnlgt": 178356,
-    "education": "HS-grad",
-    "education-num": 10,
-    "marital-status": "Married-civ-spouse",
-    "occupation": "Prof-specialty",
-    "relationship": "Husband",
-    "race": "White",
-    "sex": "Male",
-    "capital-gain": 0,
-    "capital-loss": 0,
-    "hours-per-week": 40,
-    "native-country": "United-States",
-}
+    schema = requests.get(f"{BASE_URL}/schema")
+    print("Schema tables:", list(schema.json().get("tables", {}).keys()))
 
-# TODO: send a POST using the data above
-r = None # Your code here
+    payload = {"question": "Show revenue by customer", "filters": {}, "limit": 5}
+    query = requests.post(f"{BASE_URL}/query", json=payload)
+    print("Query status:", query.status_code)
+    print("SQL:", query.json().get("sql"))
+    print("Result preview:", query.json().get("result", {}))
 
-# TODO: print the status code
-# print()
-# TODO: print the result
-# print()
+
+if __name__ == "__main__":
+    main()
+

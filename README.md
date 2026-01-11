@@ -3,7 +3,7 @@
 ## 📌 Overview
 This project demonstrates an end-to-end **machine learning inference pipeline** exposed through a **FastAPI-based REST API**. The primary focus is on **backend design, request validation, and deployment structure**, with machine learning used as a supporting component rather than a black box.
 
-The project uses the Census Income dataset to predict whether an individual earns `<=50K` or `>50K`.
+The project uses the Census Income dataset to predict whether an individual earns `<=50K` or `>50K`. It now also contains **DataWise AI**, a production-ready natural-language-to-SQL layer with schema grounding, SQL safety, caching, and data quality checks.
 
 ---
 
@@ -103,37 +103,24 @@ docker run -p 8000:8000 fastapi-ml-app
 
 ## 🔌 API Endpoints
 
-### GET /
-Returns a welcome message.
+### DataWise AI endpoints
+- `GET /` health message
+- `GET /schema` returns schema snapshot (live Postgres if configured, otherwise sample schema)
+- `POST /query` converts NL → SQL, validates, executes safely, runs data-quality checks, and returns results, SQL, confidence, and insights
+- `GET /history` returns recent queries
 
-### POST /data/
-Predicts whether income is `<=50K` or `>50K`.
-
-#### Example Request
-```json
-{
-  "age": 37,
-  "workclass": "Private",
-  "education": "HS-grad",
-  "education-num": 10,
-  "marital-status": "Married-civ-spouse",
-  "occupation": "Prof-specialty",
-  "relationship": "Husband",
-  "race": "White",
-  "sex": "Male",
-  "capital-gain": 0,
-  "capital-loss": 0,
-  "hours-per-week": 40,
-  "native-country": "United-States"
-}
+Run locally:
+```
+uvicorn main:app --reload
 ```
 
-## Example Response
-```json
-{
-  "result": "<=50K"
-}
+Sample request:
+```bash
+curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Show revenue by customer", "filters": {}, "limit": 10}'
 ```
+The response includes the SQL used, parameter values, data quality warnings, insights, and a table-ready payload.
 
 ## 📘 Documentation
 
@@ -142,19 +129,7 @@ Interactive API documentation is available via Swagger UI:
 http://localhost:8000/docs
 ```
 
-## ⚠️ Limitations
-
-- Designed for single-model inference
-- No authentication or authorization layer
-- Limited monitoring and logging
-- Dataset-specific assumptions
-
-## 🚀 Future Improvements
-
-- Add authentication and rate limiting
-- Add automated tests for API endpoints
-- Improve monitoring and logging
-- Support model versioning
+For the full production blueprint (architecture, deployment, extension ideas) see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## 📌 Key Learnings
 
@@ -166,7 +141,6 @@ http://localhost:8000/docs
 ## 📄 License
 
 This project is licensed under the MIT License.
-
 
 
 
